@@ -3,15 +3,14 @@ local midi = require("midi")
 local opus = midi.midi2opus(love.filesystem.read("Raise Up Your Bat.mid"))
 local ticks = opus[1]
 local notes = {}
-local dt
 local latestHold = nil
 local tempos = {}
 local events = {}
 local trackTimes = {}
 
--- Collect and timestamp all events across all tracks
 for i = 2, #opus do
     trackTimes[i] = 0
+    ---@diagnostic disable-next-line: param-type-mismatch
     for _, event in ipairs(opus[i]) do
         trackTimes[i] = trackTimes[i] + event[2]
         table.insert(events, {
@@ -21,15 +20,9 @@ for i = 2, #opus do
     end
 end
 
--- Sort events by global time
 table.sort(events, function(a, b)
     return a.time < b.time
 end)
-
--- Process events in order
-local notes = {}
-local latestHold = nil
-local tempos = {}
 
 for _, e in ipairs(events) do
     local dt = e.time
@@ -86,9 +79,8 @@ for _, e in ipairs(events) do
     end
 end
 
-
 local curBPM = 120
-for i, note in ipairs(notes) do
+for _, note in ipairs(notes) do
     for _, tempo in ipairs(tempos) do
         if note.start >= tempo.start then
             curBPM = tempo.bpm
@@ -99,7 +91,6 @@ for i, note in ipairs(notes) do
     if note.end_ then
         note.end_ = note.end_ * (60000 / curBPM)
     end
-
 end
 
 local uniqueNotes = {}
@@ -128,23 +119,23 @@ song:play()
 song:seek(13)
 
 local musicTime = song:tell() * 1000
-
-love.timer.step()
+love.graphics.setLineWidth(4)
+love.timer.step() -- we step because of the loading times
 
 local receptor1 = {
-    x = love.graphics.getWidth() / 2 - 51,
+    x = love.graphics.getWidth() / 2 - 62,
     y = love.graphics.getHeight() / 2 + 100,
-    width = 50,
-    height = 20,
+    width = 60,
+    height = 15,
     color = {13/255,166/255,155/255, 1},
     noteColor = {8/255, 230/255, 165/255, 1}
 }
 
 local receptor2 = {
-    x = love.graphics.getWidth() / 2+1,
+    x = love.graphics.getWidth() / 2+2,
     y = love.graphics.getHeight() / 2 + 100,
-    width = 50,
-    height = 20,
+    width = 60,
+    height = 15,
     color = {86/255,197/255,237/255, 1},
     noteColor = {26/255, 237/255, 254/255, 1}
 }
@@ -166,11 +157,14 @@ function love.update(dt)
     end
 end
 
-love.graphics.setLineWidth(3)
-
 function love.draw()
     love.graphics.setColor(1, 1, 1)
     love.graphics.print("Music Time: " .. musicTime, 10, 10)
+
+    love.graphics.setColor(receptor1.color)
+    love.graphics.rectangle("line", receptor1.x, receptor1.y, receptor1.width, receptor1.height)
+    love.graphics.setColor(receptor2.color)
+    love.graphics.rectangle("line", receptor2.x, receptor2.y, receptor2.width, receptor2.height)
 
     for i, note in ipairs(notes) do
         if note.start < 0 then
@@ -193,10 +187,4 @@ function love.draw()
 
         ::continue::
     end
-
-    -- draw
-    love.graphics.setColor(receptor1.color)
-    love.graphics.rectangle("line", receptor1.x, receptor1.y, receptor1.width, receptor1.height)
-    love.graphics.setColor(receptor2.color)
-    love.graphics.rectangle("line", receptor2.x, receptor2.y, receptor2.width, receptor2.height)
 end
