@@ -17,11 +17,11 @@ local function krisAnim(anim)
     return anims
 end
 
--- New helper function
 local function distanceSquared(x1, y1, x2, y2)
-    return (x2 - x1)^2 + (y2 - y1)^2
+    local dx = x2 - x1
+    local dy = y2 - y1
+    return dx*dx + dy*dy
 end
-
 
 function krisWalker:init()
     self.curDir = "down"
@@ -35,7 +35,7 @@ function krisWalker:init()
 
     self.followers = {
         susieWalker,
-        ralseiWalker,
+        ralseiWalker
     }
 
     self.isMoving = false
@@ -49,19 +49,20 @@ function krisWalker:init()
         right = krisAnim("Right"),
     }
 
-    self.x = self.x + self._anims[self.curDir][1]:getWidth() / 2
-    self.y = self.y + self._anims[self.curDir][1]:getHeight()
+    local firstFrame = self._anims[self.curDir][1]
+    self.x = self.x + firstFrame:getWidth() / 2
+    self.y = self.y + firstFrame:getHeight()
 
     self.lastRecordedX = self.x
     self.lastRecordedY = self.y
-    self.recordThresholdSq = 2^2
+    self.recordThresholdSq = 1
     self.drawList = {}
 
     table.insert(self.positions, {x = self.x, y = self.y, dir = self.curDir})
 
     for i, follower in ipairs(self.followers) do
         follower:init()
-        follower.trailOffset = i * 16
+        follower.trailOffset = i * 32
         follower.index = 1
         follower.x = self.x
         follower.y = self.y
@@ -70,57 +71,59 @@ end
 
 function krisWalker:update(dt)
     local lastDir = self.curDir
-    if self.isMoving then
-        self.curFrame = self.curFrame + self.fps * dt
-        if self.curFrame > #self._anims[self.curDir]+1 then
-            self.curFrame = 1
-        end
-    end
-
     local dx, dy = 0, 0
-    if love.keyboard.isDown("up") or love.keyboard.isDown("w") then
-        dy = -self.speed * dt
-        self.curDir = "up"
-    elseif love.keyboard.isDown("down") or love.keyboard.isDown("s") then
-        dy = self.speed * dt
-        self.curDir = "down"
+
+    -- Cache keyboard state for movement directions
+    local up = love.keyboard.isDown("up", "w")
+    local down = love.keyboard.isDown("down", "s")
+    local left = love.keyboard.isDown("left", "a")
+    local right = love.keyboard.isDown("right", "d")
+    local running = love.keyboard.isDown("lshift", "rshift")
+
+    if up then
+        dy = dy - 1
+    elseif down then
+        dy = dy + 1
     end
-    if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
-        dx = -self.speed * dt
-        self.curDir = "left"
-    elseif love.keyboard.isDown("right") or love.keyboard.isDown("d") then
-        dx = self.speed * dt
-        self.curDir = "right"
-    end
-    if love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift") then
-        dx = dx * self.runSpeedMultiplier
-        dy = dy * self.runSpeedMultiplier
-        self.isRunning = true
-    else
-        self.isRunning = false
+    if left then
+        dx = dx - 1
+    elseif right then
+        dx = dx + 1
     end
 
-    local moved = dx ~= 0 or dy ~= 0
+    self.isMoving = dx ~= 0 or dy ~= 0
 
-    if self.curDir ~= lastDir or not moved then
-        self.curFrame = 1
-    end
+    if self.isMoving then
+        -- Determine direction priority (last pressed direction)
+        if up then self.curDir = "up"
+        elseif down then self.curDir = "down"
+        elseif left then self.curDir = "left"
+        elseif right then self.curDir = "right" end
 
-    self.isMoving = moved
-    if moved then
-        self.x = self.x + dx
-        self.y = self.y + dy
+        local moveSpeed = self.speed * (running and self.runSpeedMultiplier or 1)
+        self.x = self.x + dx * moveSpeed * dt
+        self.y = self.y + dy * moveSpeed * dt
 
         if distanceSquared(self.x, self.y, self.lastRecordedX, self.lastRecordedY) > self.recordThresholdSq then
             table.insert(self.positions, {x = self.x, y = self.y, dir = self.curDir})
             self.lastRecordedX = self.x
             self.lastRecordedY = self.y
+
+            if #self.positions > self.maxTrailLength then
+                table.remove(self.positions, 1)
+            end
         end
 
-        if #self.positions > self.maxTrailLength then
-            table.remove(self.positions, 1)
+        self.curFrame = self.curFrame + self.fps * dt
+        local maxFrame = #self._anims[self.curDir]
+        if self.curFrame > maxFrame then
+            self.curFrame = 1
         end
+    else
+        self.curFrame = 1
     end
+
+    self.isRunning = running
 
     for _, follower in ipairs(self.followers) do
         local index = #self.positions - follower.trailOffset
@@ -133,13 +136,11 @@ function krisWalker:update(dt)
         end
     end
 
-    for i = #self.drawList, 1, -1 do
-        self.drawList[i] = nil
-    end
-
-    self.drawList[1] = { sprite = self, y = self.y }
+    self.drawList = {
+        { sprite = self, y = self.y },
+    }
     for _, follower in ipairs(self.followers) do
-        self.drawList[#self.drawList+1] = { sprite = follower, y = follower.y }
+        table.insert(self.drawList, { sprite = follower, y = follower.y })
     end
 
     table.sort(self.drawList, function(a, b) return a.y < b.y end)
@@ -151,7 +152,8 @@ function krisWalker:draw()
         local anim = char._anims[char.curDir]
         if anim and #anim > 0 then
             local frame = math.floor(char.curFrame)
-            love.graphics.draw(anim[frame], char.x, char.y, 0, 1, 1, anim[frame]:getWidth()/2, anim[frame]:getHeight())
+            local image = anim[frame]
+            love.graphics.draw(image, char.x, char.y, 0, 1, 1, image:getWidth()/2, image:getHeight())
         end
     end
 end
