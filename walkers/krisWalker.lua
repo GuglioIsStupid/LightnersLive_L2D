@@ -4,9 +4,10 @@ local function getPath(path)
     return "assets/Fun Gang Walk/" .. path
 end
 
-local susieWalker = require("susieWalker")
-local ralseiWalker = require("ralseiWalker")
-local lancerWalker = require("LancerWalker")
+local susieWalker = require("walkers.susieWalker")
+local ralseiWalker = require("walkers.ralseiWalker")
+-- local starWalker = require("walkers.starWalker")
+local lancerWalker = require("walkers.lancerWalker")
 
 local function krisAnim(anim)
     local anims = {}
@@ -37,6 +38,7 @@ function krisWalker:init()
     self.followers = {
         susieWalker,
         ralseiWalker,
+        -- starWalker,
         lancerWalker
     }
 
@@ -163,7 +165,12 @@ function krisWalker:draw()
         local anim = char._anims[char.curDir]
         if not anim then anim = char._anims.idle end
         if anim and #anim > 0 then
-            local frame = math.floor(char.curFrame) % #anim + 1
+            local frame = math.floor(char.curFrame)
+            if frame < 1 then
+                frame = 1
+            elseif frame > #anim then
+                frame = #anim
+            end
             local image = anim[frame]
             love.graphics.draw(image, char.x, char.y, 0, 1, 1, image:getWidth()/2, image:getHeight())
         end

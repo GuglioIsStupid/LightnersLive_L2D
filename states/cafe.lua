@@ -1,6 +1,6 @@
 local cafe = {}
 
-local krisWalker = require("krisWalker")
+local krisWalker = require("walkers.krisWalker")
 
 function cafe:enter()
     krisWalker:init()

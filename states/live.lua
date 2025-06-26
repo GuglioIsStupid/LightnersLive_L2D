@@ -1,8 +1,8 @@
-local midi = require("midi")
+local midi = require("lib.midi")
 
 local live = {}
 
-local opus = midi.midi2opus(love.filesystem.read("Raise Up Your Bat.mid"))
+local opus = midi.midi2opus(love.filesystem.read("songs/Raise Up Your Bat/Raise Up Your Bat.mid"))
 local ticks = opus[1]
 local notes = {}
 local latestHold = nil
@@ -115,7 +115,7 @@ end
 
 notes = uniqueNotes
 
-local song = love.audio.newSource("Raise Up Your Bat.mp3", "stream")
+local song = love.audio.newSource("songs/Raise Up Your Bat/Raise Up Your Bat.mp3", "stream")
 
 song:seek(13)
 
@@ -124,8 +124,8 @@ love.graphics.setLineWidth(4)
 love.timer.step() -- we step because of the loading times
 
 local receptor1 = {
-    x = love.graphics.getWidth() / 2 - 62,
-    y = love.graphics.getHeight() / 2 + 100,
+    x = 320 / 2 - 62,
+    y = 240 / 2 + 100,
     width = 60,
     height = 15,
     color = {13/255,166/255,155/255, 1},
@@ -133,8 +133,8 @@ local receptor1 = {
 }
 
 local receptor2 = {
-    x = love.graphics.getWidth() / 2+2,
-    y = love.graphics.getHeight() / 2 + 100,
+    x = 320 / 2+2,
+    y = 240 / 2 + 100,
     width = 60,
     height = 15,
     color = {86/255,197/255,237/255, 1},
