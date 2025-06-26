@@ -42,7 +42,7 @@ function krisWalker:init()
 
     self.isMoving = false
     self.isRunning = false
-    self.fps = 8
+    self.fps = 4
     self.goingBackInFrames = false
 
     self._anims = {
@@ -122,7 +122,7 @@ function krisWalker:update(dt)
             end
         end
 
-        self.curFrame = self.curFrame + self.fps * dt
+        self.curFrame = self.curFrame + self.fps * dt * (running and self.runSpeedMultiplier or 1)
         local maxFrame = #self._anims[self.curDir]+1
         if self.curFrame > maxFrame then
             self.curFrame = 1
