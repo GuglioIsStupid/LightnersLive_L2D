@@ -6,6 +6,7 @@ end
 
 local susieWalker = require("susieWalker")
 local ralseiWalker = require("ralseiWalker")
+local lancerWalker = require("LancerWalker")
 
 local function krisAnim(anim)
     local anims = {}
@@ -35,12 +36,14 @@ function krisWalker:init()
 
     self.followers = {
         susieWalker,
-        ralseiWalker
+        ralseiWalker,
+        lancerWalker
     }
 
     self.isMoving = false
     self.isRunning = false
     self.fps = 8
+    self.goingBackInFrames = false
 
     self._anims = {
         down = krisAnim("Down"),
@@ -57,6 +60,7 @@ function krisWalker:init()
     self.lastRecordedY = self.y
     self.recordThresholdSq = 1
     self.drawList = {}
+    self.hasLancerWalkerSecret = false
 
     table.insert(self.positions, {x = self.x, y = self.y, dir = self.curDir})
 
@@ -69,11 +73,15 @@ function krisWalker:init()
     end
 end
 
+function krisWalker:addLancerWalkerSecret()
+    self.hasLancerWalkerSecret = true
+    lancerWalker:play()
+end
+
 function krisWalker:update(dt)
     local lastDir = self.curDir
     local dx, dy = 0, 0
 
-    -- Cache keyboard state for movement directions
     local up = love.keyboard.isDown("up", "w")
     local down = love.keyboard.isDown("down", "s")
     local left = love.keyboard.isDown("left", "a")
@@ -115,7 +123,7 @@ function krisWalker:update(dt)
         end
 
         self.curFrame = self.curFrame + self.fps * dt
-        local maxFrame = #self._anims[self.curDir]
+        local maxFrame = #self._anims[self.curDir]+1
         if self.curFrame > maxFrame then
             self.curFrame = 1
         end
@@ -149,12 +157,18 @@ end
 function krisWalker:draw()
     for _, entry in ipairs(self.drawList) do
         local char = entry.sprite
+        if char.visible == false then
+            goto continue
+        end
         local anim = char._anims[char.curDir]
+        if not anim then anim = char._anims.idle end
         if anim and #anim > 0 then
-            local frame = math.floor(char.curFrame)
+            local frame = math.floor(char.curFrame) % #anim + 1
             local image = anim[frame]
             love.graphics.draw(image, char.x, char.y, 0, 1, 1, image:getWidth()/2, image:getHeight())
         end
+
+        ::continue::
     end
 end
 

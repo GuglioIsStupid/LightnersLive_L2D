@@ -37,6 +37,8 @@ function ralseiWalker:init()
         right = ralseiAnim("Right"),
     }
 
+    self.hasWalkingAnims = true
+
     print("Ralsei Walker initialized with animations for directions: down, up, left, right")
 end
 

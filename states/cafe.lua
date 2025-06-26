@@ -10,6 +10,10 @@ function cafe:update(dt)
     krisWalker:update(dt)
 end
 
+function cafe:addLancerWalkerSecret()
+    krisWalker:addLancerWalkerSecret()
+end
+
 function cafe:draw()
     krisWalker:draw()
 end

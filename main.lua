@@ -26,6 +26,12 @@ function love.update(dt)
     end
 end
 
+function love.keypressed(key)
+    if key == "l" and curState == cafe then
+        cafe:addLancerWalkerSecret()
+    end
+end
+
 function love.draw()
     love.graphics.setCanvas(canvas)
         love.graphics.clear()

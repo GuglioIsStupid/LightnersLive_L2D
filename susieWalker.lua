@@ -37,6 +37,8 @@ function susieWalker:init()
         right = susieAnim("Right"),
     }
 
+    self.hasWalkingAnims = true
+
     print("Susie Walker initialized with animations for directions: down, up, left, right")
 end
 
