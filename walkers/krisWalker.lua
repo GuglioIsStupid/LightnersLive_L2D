@@ -6,8 +6,10 @@ end
 
 local susieWalker = require("walkers.susieWalker")
 local ralseiWalker = require("walkers.ralseiWalker")
--- local starWalker = require("walkers.starWalker")
+local starWalker = require("walkers.starWalker")
 local lancerWalker = require("walkers.lancerWalker")
+local fuckingMonkeyWalker = require("walkers.fuckingMonkeyWalker")
+local superFuckingMarioWalker = require("walkers.superFuckingMarioWalker")
 
 local function krisAnim(anim)
     local anims = {}
@@ -38,9 +40,11 @@ function krisWalker:init()
     self.followers = {
         susieWalker,
         ralseiWalker,
-        -- starWalker,
-        lancerWalker
+        starWalker,
+        fuckingMonkeyWalker,
+        superFuckingMarioWalker
     }
+    table.insert(self.followers, lancerWalker)
 
     self.isMoving = false
     self.isRunning = false
@@ -101,7 +105,10 @@ function krisWalker:update(dt)
         dx = dx + 1
     end
 
-    self.isMoving = dx ~= 0 or dy ~= 0
+    local normDX = dx ~= 0 and dx / math.sqrt(dx * dx + dy * dy) or 0
+    local normDY = dy ~= 0 and dy / math.sqrt(dx * dx + dy * dy) or 0
+
+    self.isMoving = normDX ~= 0 or normDY ~= 0
 
     if self.isMoving then
         -- Determine direction priority (last pressed direction)
@@ -111,8 +118,8 @@ function krisWalker:update(dt)
         elseif right then self.curDir = "right" end
 
         local moveSpeed = self.speed * (running and self.runSpeedMultiplier or 1)
-        self.x = self.x + dx * moveSpeed * dt
-        self.y = self.y + dy * moveSpeed * dt
+        self.x = self.x + normDX * moveSpeed * dt
+        self.y = self.y + normDY * moveSpeed * dt
 
         if distanceSquared(self.x, self.y, self.lastRecordedX, self.lastRecordedY) > self.recordThresholdSq then
             table.insert(self.positions, {x = self.x, y = self.y, dir = self.curDir})
@@ -172,7 +179,7 @@ function krisWalker:draw()
                 frame = #anim
             end
             local image = anim[frame]
-            love.graphics.draw(image, char.x, char.y, 0, 1, 1, image:getWidth()/2, image:getHeight())
+            love.graphics.draw(image, char.x, char.y, 0, char.scale or 1, char.scale or 1, image:getWidth()/2, image:getHeight())
         end
 
         ::continue::
